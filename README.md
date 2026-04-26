@@ -1,7 +1,7 @@
 # Detector_de_Anomalii_in_Log-uri_cu_ML_Simplu
 
 ## Descriere
-Acest proiect implementează un sistem simplu de detecție a anomaliilor în log-uri de autentificare web, în contextul securității aplicațiilor cloud. Scopul este identificarea atacurilor de tip brute-force folosind machine learning nesupravegheat.
+Acest proiect propune un sistem de detecție a anomaliilor în log-uri de autentificare web, în contextul securității aplicațiilor cloud. Obiectivul este identificarea atacurilor de tip brute-force prin utilizarea tehnicilor de machine learning nesupravegheat.
 
 ---
 
