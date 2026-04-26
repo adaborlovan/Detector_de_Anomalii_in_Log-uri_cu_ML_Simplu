@@ -1,0 +1,199 @@
+==============================================================
+DETECTOR DE ANOMALII IN LOG-URI CU ML SIMPLU- SECURITATE CLOUD
+==============================================================
+
+1. INTRODUCERE
+----------------------------------------------------
+Acest proiect abordează problema detecției automate a atacurilor de tip brute-force în log-uri de autentificare web, în contextul securității aplicațiilor cloud.
+
+În mediile cloud moderne, sistemele de autentificare sunt expuse frecvent la încercări automate de acces neautorizat. Detecția manuală este ineficientă, motiv pentru care am explorat utilizarea machine learning-ului nesupravegheat pentru identificarea comportamentelor anormale.
+
+Obiectivul proiectului este detectarea comportamentelor suspecte pe baza log-urilor de acces, fără utilizarea unor date etichetate.
+
+----------------------------------------------------
+
+2. SCENARIU ȘI MODELARE
+----------------------------------------------------
+Pentru simulare, au fost generate log-uri sintetice care includ:
+- utilizatori normali cu comportament variat de navigare și autentificare
+- un atacator care efectuează multiple încercări de login eșuat (brute-force)
+
+Log-urile conțin:
+- IP address
+- timestamp
+- acțiune (LOGIN_SUCCESS, LOGIN_FAILED, GET requests)
+
+----------------------------------------------------
+
+3. FEATURE ENGINEERING
+----------------------------------------------------
+Datele au fost agregate la nivel de IP pentru a extrage comportamente relevante:
+
+- requests: numărul total de acțiuni
+- failed_logins: numărul de autentificări eșuate
+- fail_rate: raportul dintre autentificări eșuate și total request-uri
+
+Această transformare este necesară deoarece algoritmii de machine learning nu pot lucra direct cu log-uri secvențiale brute.
+
+----------------------------------------------------
+
+4. MODELUL UTILIZAT
+----------------------------------------------------
+A fost utilizat algoritmul Isolation Forest.
+
+Motivație:
+- nu necesită date etichetate
+- detectează outliers prin izolarea punctelor rare în distribuție
+- este eficient pentru date tabulare de dimensiuni mici și medii
+
+----------------------------------------------------
+
+5. TRADE-OFF-URI
+----------------------------------------------------
+Există mai multe compromisuri în designul sistemului:
+
+- Sensibilitate vs. precizie:
+  Un model mai sensibil detectează mai multe atacuri, dar generează mai multe false positive-uri.
+
+- Simplitate vs. realism:
+  Modelul folosește agregare pe IP pentru simplitate, dar pierde informații temporale detaliate.
+
+- Performanță vs. interpretabilitate:
+  Isolation Forest este ușor de implementat, dar nu oferă explicații detaliate ale deciziei.
+
+----------------------------------------------------
+
+6. PERSPECTIVE CONTRADICTORII
+----------------------------------------------------
+Există mai multe abordări în literatura de securitate:
+
+- abordare bazată pe reguli (rule-based)
+  + ușor de interpretat
+  - rigid și ușor de evitat de atacatori
+
+- abordare ML (folosită în acest proiect)
+  + detectează pattern-uri necunoscute
+  - poate genera false positive
+
+- abordare hibridă (recomandată în practică)
+  combină reguli simple cu machine learning
+
+----------------------------------------------------
+
+7. BUNE PRACTICI DE SECURITATE
+----------------------------------------------------
+Codul respectă următoarele principii:
+
+- separarea clară a etapelor (data generation / preprocessing / detection)
+- utilizarea unui model nesupravegheat (nu necesită date sensibile etichetate)
+- evitarea stocării de date reale sensibile
+- utilizarea de date sintetice pentru simulare
+
+----------------------------------------------------
+
+8. CONTRIBUȚIE PERSONALĂ
+----------------------------------------------------
+Contribuția personală constă în:
+
+- modelarea unui scenariu realist de brute-force attack
+- transformarea log-urilor brute în features comportamentale relevante
+- integrarea unui pipeline complet de detecție
+- analiza limitărilor și comportamentului modelului
+
+De asemenea, proiectul reflectă o perspectivă practică asupra securității cloud, în care detecția anomaliilor nu este absolută, ci probabilistică și dependentă de context.
+
+----------------------------------------------------
+
+9. MODELAREA AMENINȚĂRILOR (STRIDE APLICAT PE PROIECT)
+----------------------------------------------------
+În contextul proiectului, atacul brute-force este cel mai puternic asociat cu:
+- Elevation of Privileges (obiectiv principal)
+- Denial of Service (efect secundar)
+
+DoS:
+Atacurile brute-force generează un volum mare de încercări de autentificare, ceea ce poate:
+- suprasolicita sistemul de autentificare
+- crește încărcarea serverului
+- duce la degradarea performanței sau indisponibilitate
+
+EoP:
+Aceasta reprezintă scopul principal al atacului brute-force.
+Atacatorul încearcă să obțină acces neautorizat la conturi valide prin ghicirea credențialelor.
+
+10. REZULTATE
+----------------------------------------------------
+Modelul a identificat corect IP-ul atacator, caracterizat printr-un număr mare de autentificări eșuate și o rată de eșec apropiată de 1.
+
+De asemenea, au fost observate cazuri de false positive, în care utilizatori legitimi cu activitate redusă au fost clasificați ca anomalii, evidențiind limitările modelului.
+
+Rezultatele confirmă faptul că Isolation Forest poate detecta deviații semnificative de comportament, dar necesită ajustări pentru reducerea alertelor false.
+
+11. CONCLUZIE
+----------------------------------------------------
+Proiectul demonstrează aplicabilitatea tehnicilor de machine learning nesupravegheat în detecția comportamentelor anormale în log-uri de autentificare.
+
+Deși sistemul este simplificat, acesta evidențiază clar:
+- importanța feature engineering-ului
+- limitările modelelor nesupravegheate
+- necesitatea echilibrului între detecție și reducerea alertelor false
+
+
+====================================================
+LIMITĂRI ȘI VULNERABILITĂȚI ALE SISTEMULUI
+====================================================
+
+1. False positive (alarme false)
+----------------------------------------------------
+Una dintre principalele limitări ale sistemului este apariția alarmelor false (false positives). Acestea apar atunci când utilizatori legitimi, cu un comportament rar sau atipic (de exemplu număr redus de request-uri sau activitate neuniformă), sunt clasificați în mod eronat ca fiind anomalii.
+
+Acest aspect reprezintă o vulnerabilitate importantă în contextul securității, deoarece poate conduce la alerte inutile sau chiar la restricționarea accesului unor utilizatori legitimi.
+
+---
+
+2. False negative (anomalii nedetectate)
+----------------------------------------------------
+Sistemul poate eșua în detectarea unor atacuri reale (false negatives), în special în cazul atacurilor de tip “low-and-slow”, în care atacatorul distribuie încercările de autentificare pe o perioadă mai lungă de timp pentru a evita detectarea.
+
+De asemenea, atacurile distribuite (realizate de pe mai multe IP-uri) pot să nu fie identificate eficient de model.
+
+---
+
+3. Lipsa analizei temporale
+----------------------------------------------------
+Modelul utilizat nu ia în considerare dependențele temporale dintre evenimente, lucrând exclusiv pe agregări statistice la nivel de IP.
+
+Această limitare reduce capacitatea sistemului de a detecta tipare secvențiale de atac, cum ar fi explozii de trafic (burst attacks) sau comportamente evolutive în timp.
+
+---
+
+4. Dependența de feature engineering
+----------------------------------------------------
+Performanța modelului este puternic influențată de alegerea și calitatea caracteristicilor (feature-urilor) extrase din log-uri.
+
+O selecție necorespunzătoare a feature-urilor poate duce la degradarea performanței sau la rezultate instabile, ceea ce reprezintă o vulnerabilitate structurală a abordării.
+
+---
+
+5. Lipsa explicabilității deciziilor
+----------------------------------------------------
+Algoritmul Isolation Forest oferă un scor de anomalie, însă nu furnizează explicații clare privind decizia luată pentru fiecare observație.
+
+Acest lucru poate reprezenta o problemă în contexte de securitate, unde este necesară justificarea alertelor pentru analiză și audit.
+
+
+====================================================
+REFERINȚE
+====================================================
+
+[1] Liu, F. T., Ting, K. M., Zhou, Z. H. (2008).
+Isolation Forest. 
+
+[2] Microsoft Learn. STRIDE Threat Model.
+
+[3] NIST SP 800-92. Guide to Computer Security Log Management.
+
+[4] OWASP. Authentication Cheat Sheet.
+
+====================================================
+FINALUL RAPORTULUI
+====================================================
